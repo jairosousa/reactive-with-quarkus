@@ -19,9 +19,7 @@ import javax.ws.rs.ext.Provider;
 import java.net.URI;
 import java.util.List;
 
-
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.*;
 
 /**
  * @Autor Jairo Nascimento
@@ -48,9 +46,12 @@ public class FruitResource {
 
     @POST
     public Uni<Response> create(Fruit fruit) {
-        return Panache.<Fruit>withTransaction(fruit::persist)
-                .onItem()
-                .transform(inserted -> Response.created(URI.create("/fruits/" + inserted.id)).build());
+        if (fruit == null || fruit.id != null) {
+            throw new WebApplicationException("Id was invalidly set on request.", 422);
+        }
+
+        return Panache.withTransaction(fruit::persist)
+                .replaceWith(Response.ok(fruit).status(CREATED)::build);
     }
 
     @PUT
